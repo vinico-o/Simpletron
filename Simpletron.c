@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <locale.h>
 
+#define MEMORY_SIZE 100 //tamanho da memoria
+
 //Operações Entrada/Saida
 #define READ 10 //coloca a plaavra na memória
 #define WRITE 11 //escreve uma palavra da memória no terminal
@@ -20,6 +22,13 @@
 #define BRANCHNEG 41
 #define BRANCHZERO 42
 #define HALT 43
+
+int memory[MEMORY_SIZE] = {0}; //memoria
+int accumulator = 0; //acumulador, armazenamento dos resultados
+int instructionCounter = 0; //contador de instrucao
+int opCode = 0; //Codigo de operacao (dois digitos da esquerda)
+int operand = 0; //operando (dois digitos da direita)
+int instructionRegister = 0; //
 
 void Initialization()
 {
