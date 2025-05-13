@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <locale.h>
 
 //Operações Entrada/Saida
 #define READ 10 //coloca a plaavra na memória
@@ -19,3 +20,19 @@
 #define BRANCHNEG 41
 #define BRANCHZERO 42
 #define HALT 43
+
+void Initialization()
+{
+    printf("Bem vindo ao Simpletron!\n");
+    printf("Digite uma instrução por vez.\n");
+    printf("Digitarei o numero da posição e um ponto de interrogação (?)\n");
+    printf("Então, digite a palavra para aquela posição.\n");
+    printf("Digite o valor sentinela -99999 para encerrar.\n");
+}
+
+int main()
+{
+    setlocale(LC_ALL, "Portuguese");
+
+    Initialization();
+}
