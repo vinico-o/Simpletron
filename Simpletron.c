@@ -40,27 +40,61 @@ void Initialization()
     printf("Digite o valor sentinela -99999 para encerrar.\n\n");
 }
 
-void InstructionExecutionCycle()
+void Dump()
+{
+    printf("\nREGISTERS:\n");
+    printf("Accumulator          %+05d\n", accumulator);
+    printf("InstructionCounter      %02d\n", instructionCounter);
+    printf("InstructionRegister  %+05d\n", instructionRegister);
+    printf("OperationCode           %02d\n", operationCode);
+    printf("Operand                 %02d\n", operand);
+
+    printf("\nMEMORIA:\n");
+    printf("         0       1       2       3       4       5       6       7       8       9\n");
+    for(int i = 0; i < MEMORY_SIZE; i+= 10)
+    {
+        printf("%02d", i);
+        for(int j = 0; j < 10; j++)
+        {
+            printf("  %+06d", memory[i + j]);
+        }
+        printf("\n");
+    }
+}
+
+void ProgramLoading()
 {
     do
     {
         printf("%02d? ", instructionCounter);
         scanf("%d", &memory[instructionCounter]);
-        instructionRegister = memory[instructionCounter];
-        operationCode = instructionRegister / 100;
-        operand = instructionRegister % 100;
 
         if(memory[instructionCounter] == SENTINEL)
         {
             printf("Sentinela digitado!\n");
             printf("Carregamento do Programa Completo!\n");
+            Dump();
             return;
         }
+
+        instructionCounter++;
+    } while (instructionCounter < MEMORY_SIZE);
+}
+
+void InstructionExecutionCycle()
+{
+    instructionCounter = 0;
+
+    while (instructionCounter < MEMORY_SIZE)
+    {
+        instructionRegister = memory[instructionCounter];
+        operationCode = instructionRegister / 100;
+        operand = instructionRegister % 100;
 
         switch(operationCode)
         {
             case READ:
-                printf("Digite um numero: ");
+                printf("\nDigite um numero: ");
                 scanf("%d", &memory[operand]);
                 break;
             case WRITE:
@@ -76,12 +110,13 @@ void InstructionExecutionCycle()
                 accumulator += memory[operand];
                 break;
             case SUBTRACT:
-                accumulator += memory[operand];
+                accumulator -= memory[operand];
                 break;
             case DIVIDE:
                 if(memory[operand] == 0)
                 {
                     printf("Divisao por 0!\n");
+                    Dump();
                     return;
                 }
                 accumulator /= memory[operand];
@@ -97,12 +132,19 @@ void InstructionExecutionCycle()
             case BRANCHZERO:
                 break;
             case HALT:
+                printf("Execucao do Simpletron terminou!\n");
+                Dump();
+                return;
+                break;
+            default:
+                printf("Erro: Instrucao Invalida!\n");
+                Dump();
                 break;
 
         }
 
         instructionCounter++;
-    } while (memory[instructionCounter] < MEMORY_SIZE);
+    }
     
 }
 
@@ -111,6 +153,8 @@ int main()
     setlocale(LC_ALL, "Portuguese");
 
     Initialization();
+    ProgramLoading();
     InstructionExecutionCycle();
 
+    return 0;
 }
