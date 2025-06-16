@@ -124,12 +124,20 @@ void InstructionExecutionCycle()
             case MULTIPLY:
                 accumulator *= memory[operand];
                 break;
-            //TODO: fazer operacoes de branch em breve
             case BRANCH:
+                instructionCounter = operand;
                 break;
             case BRANCHNEG:
+                if(accumulator < 0)
+                {
+                    instructionCounter = operand;
+                }
                 break;
             case BRANCHZERO:
+                if(accumulator == 0)
+                {
+                    instructionCounter = operand;
+                }
                 break;
             case HALT:
                 printf("Execucao do Simpletron terminou!\n");
