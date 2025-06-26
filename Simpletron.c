@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <locale.h>
 
 #define MEMORY_SIZE 100 //tamanho da memoria
@@ -62,13 +63,11 @@ void Dump()
     }
 }
 
-void ProgramLoading()
+void ProgramLoading(FILE* arquivo)
 {
-    do
+    while(fscanf(arquivo, "%d", &memory[instructionCounter]) == 1 && instructionCounter < MEMORY_SIZE)
     {
-        printf("%02d? ", instructionCounter);
-        scanf("%d", &memory[instructionCounter]);
-
+        printf("%02d? %d\n", instructionCounter, memory[instructionCounter]);
         if(memory[instructionCounter] == SENTINEL)
         {
             printf("Sentinela digitado!\n");
@@ -78,7 +77,7 @@ void ProgramLoading()
         }
 
         instructionCounter++;
-    } while (instructionCounter < MEMORY_SIZE);
+    }
 }
 
 void InstructionExecutionCycle()
@@ -159,10 +158,17 @@ void InstructionExecutionCycle()
 int main()
 {
     setlocale(LC_ALL, "Portuguese");
+    FILE* arquivo = fopen("arquivo.txt", "r");
+    if(arquivo == NULL)
+    {
+        printf("Erro ao abrir arquivo!\n");
+        return 1;
+    }
 
     Initialization();
-    ProgramLoading();
+    ProgramLoading(arquivo);
     InstructionExecutionCycle();
 
+    fclose(arquivo);
     return 0;
 }
