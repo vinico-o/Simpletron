@@ -4,6 +4,8 @@
 
 #define MEMORY_SIZE 100 //tamanho da memoria
 #define SENTINEL -99999 //valor para sair do programa
+#define MINIMUM -9999 //Valor minimo da instrução
+#define MAXIMUM 9999 //Valor Máximo da instrução
 
 //Operações Entrada/Saida
 #define READ 10 //coloca a plaavra na memória
@@ -14,16 +16,16 @@
 #define STORE 21
 
 //Operações Aritméticas
-#define ADD 30
-#define SUBTRACT 31
-#define DIVIDE 32
-#define MULTIPLY 33
+#define ADD 30 //Soma do acumolador
+#define SUBTRACT 31 //Subtrai do acumolador
+#define DIVIDE 32 //Divide do acumolador
+#define MULTIPLY 33 //Multiplica do acumulador
 
 //Operações de Transferência de Controle
-#define BRANCH 40
-#define BRANCHNEG 41
-#define BRANCHZERO 42
-#define HALT 43
+#define BRANCH 40 //Salta para um local da memória
+#define BRANCHNEG 41 //Salta para um local da memória, se Acumulado < 0
+#define BRANCHZERO 42 //salta para um local da memória, se Acumulador = 0
+#define HALT 43 //Para o programa
 
 int memory[MEMORY_SIZE] = {0}; //memoria
 int accumulator = 0; //acumulador, armazenamento dos resultados
@@ -72,6 +74,12 @@ void ProgramLoading(FILE* arquivo)
         {
             printf("Sentinela digitado!\n");
             printf("Carregamento do Programa Completo!\n");
+            Dump();
+            return;
+        }
+        if(memory[instructionCounter] < MINIMUM || memory[instructionCounter] > MAXIMUM)
+        {
+            printf("Valor fora do intervalo de Instrucoes!\n");
             Dump();
             return;
         }
