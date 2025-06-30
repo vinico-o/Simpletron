@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <locale.h>
 
 #define MEMORY_SIZE 100 //tamanho da memoria
 #define SENTINEL -99999 //valor para sair do programa
-#define MINIMUM -9999 //Valor minimo da instrução
-#define MAXIMUM 9999 //Valor Máximo da instrução
+#define MIN -9999 //Valor minimo da instrução
+#define MAX 9999 //Valor Máximo da instrução
 
 //Operações Entrada/Saida
 #define READ 10 //coloca a plaavra na memória
@@ -36,7 +37,7 @@ int instructionRegister = 0; //instrucao atual
 
 void Initialization()
 {
-    printf("Bem vindo ao Simpletron!\n");
+    printf("\nBem vindo ao Simpletron!\n");
     printf("Digite uma instrução por vez.\n");
     printf("Digitarei o numero da posição e um ponto de interrogação (?)\n");
     printf("Então, digite a palavra para aquela posição.\n");
@@ -53,16 +54,28 @@ void Dump()
     printf("Operand                 %02d\n", operand);
 
     printf("\nMEMORIA:\n");
-    printf("         0       1       2       3       4       5       6       7       8       9\n");
-    for(int i = 0; i < MEMORY_SIZE; i+= 10)
+    printf("        0      1      2      3      4      5      6      7      8      9\n");
+    for(int i = 0; i < MEMORY_SIZE; i += 10)
     {
         printf("%02d", i);
         for(int j = 0; j < 10; j++)
         {
-            printf("  %+06d", memory[i + j]);
+            printf("  %+05d", memory[i + j]);
         }
         printf("\n");
     }
+
+    printf("\n");
+}
+
+bool AccumulatorOverflow(int accumulador)
+{
+    if(accumulador < MIN || accumulador > MAX)
+    {
+        return true;
+    }
+
+    return false;
 }
 
 void ProgramLoading(FILE* arquivo)
@@ -72,12 +85,13 @@ void ProgramLoading(FILE* arquivo)
         printf("%02d? %d\n", instructionCounter, memory[instructionCounter]);
         if(memory[instructionCounter] == SENTINEL)
         {
-            printf("Sentinela digitado!\n");
+            memory[instructionCounter] = 0;
+            printf("\nSentinela digitado!\n");
             printf("Carregamento do Programa Completo!\n");
             Dump();
             return;
         }
-        if(memory[instructionCounter] < MINIMUM || memory[instructionCounter] > MAXIMUM)
+        if(memory[instructionCounter] < MIN || memory[instructionCounter] > MAX)
         {
             printf("Valor fora do intervalo de Instrucoes!\n");
             Dump();
@@ -101,11 +115,11 @@ void InstructionExecutionCycle()
         switch(operationCode)
         {
             case READ:
-                printf("\nDigite um numero: ");
+                printf("Digite o numero no endereco %02d: ", operand);
                 scanf("%d", &memory[operand]);
                 break;
             case WRITE:
-                printf("O numero em %02d: %d\n", operand, memory[operand]);
+                printf("\nO numero em %02d: %d\n", operand, memory[operand]);
                 break;
             case LOAD:
                 accumulator = memory[operand];
@@ -122,7 +136,7 @@ void InstructionExecutionCycle()
             case DIVIDE:
                 if(memory[operand] == 0)
                 {
-                    printf("Divisao por 0!\n");
+                    printf("Erro Fatal. Divisao por 0!\n");
                     Dump();
                     return;
                 }
@@ -158,6 +172,13 @@ void InstructionExecutionCycle()
 
         }
 
+        if(AccumulatorOverflow(accumulator))
+        {
+            printf("Erro Fatal. Estouro do Acumulador!\n");
+            Dump();
+            return;
+        }
+
         instructionCounter++;
     }
     
@@ -166,7 +187,13 @@ void InstructionExecutionCycle()
 int main()
 {
     setlocale(LC_ALL, "Portuguese");
-    FILE* arquivo = fopen("arquivo.txt", "r");
+    char filename[100];
+    FILE* arquivo;
+    
+    printf("Digite o nome do Arquivo: ");
+    gets(filename);
+
+    arquivo = fopen(filename, "r");
     if(arquivo == NULL)
     {
         printf("Erro ao abrir arquivo!\n");
