@@ -1,3 +1,5 @@
+//Autor: Vinícius Mardegan
+//Projeto: Simpletron, DEITEL, Paul; DEITEL, Harvey. C: How to Program.
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -28,13 +30,46 @@
 #define BRANCHZERO 42 //salta para um local da memória, se Acumulador = 0
 #define HALT 43 //Para o programa
 
-int memory[MEMORY_SIZE] = {0}; //memoria
-int accumulator = 0; //acumulador, armazenamento dos resultados
-int instructionCounter = 0; //contador de instrucao
-int operationCode = 0; //Codigo de operacao (dois digitos da esquerda)
-int operand = 0; //endereco da memoria (dois digitos da direita)
-int instructionRegister = 0; //instrucao atual
+//Funções
+void Initialization();
+void Dump(int memory[], int* accumulator, int* instructionCounter, int* instructionRegister, int* operationCode, int* operand);
+bool AccumulatorOverflow(int accumulador);
+void ProgramLoading(FILE* arquivo, int memory[], int* accumulator, int* instructionCounter, int* instructionRegister, int* operationCode, int* operand);
+void InstructionExecutionCycle(int memory[], int* accumulator, int* instructionCounter, int* instructionRegister, int* operationCode, int* operand);
 
+int main()
+{
+    setlocale(LC_ALL, "Portuguese");
+    char filename[100];
+    FILE* arquivo;
+
+    //Variaveis do Simpletron
+    int memory[MEMORY_SIZE] = {0}; //memoria
+    int accumulator = 0; //acumulador, armazenamento dos resultados
+    int instructionCounter = 0; //contador de instrucao
+    int operationCode = 0; //Codigo de operacao (dois digitos da esquerda)
+    int operand = 0; //endereco da memoria (dois digitos da direita)
+    int instructionRegister = 0; //instrucao atual
+    
+    printf("Digite o nome (ou diretório) do Arquivo: ");
+    gets(filename);
+
+    arquivo = fopen(filename, "r");
+    if(arquivo == NULL)
+    {
+        printf("Erro ao abrir arquivo!\n");
+        return 1;
+    }
+
+    Initialization();
+    ProgramLoading(arquivo, memory, &accumulator, &instructionCounter, &instructionRegister, &operationCode, &operand);
+    InstructionExecutionCycle(memory, &accumulator, &instructionCounter, &instructionRegister, &operationCode, &operand);
+
+    fclose(arquivo);
+    return 0;
+}
+
+//Mensagens de Boas Vindas
 void Initialization()
 {
     printf("\nBem vindo ao Simpletron!\n");
@@ -44,15 +79,17 @@ void Initialization()
     printf("Digite o valor sentinela -99999 para encerrar.\n\n");
 }
 
-void Dump()
+//Impressao dos registradores e da memoria do simpletron
+void Dump(int memory[], int* accumulator, int* instructionCounter, int* instructionRegister, int* operationCode, int* operand)
 {
     printf("\nREGISTERS:\n");
-    printf("Accumulator          %+05d\n", accumulator);
-    printf("InstructionCounter      %02d\n", instructionCounter);
-    printf("InstructionRegister  %+05d\n", instructionRegister);
-    printf("OperationCode           %02d\n", operationCode);
-    printf("Operand                 %02d\n", operand);
+    printf("Accumulator          %+05d\n", *accumulator);
+    printf("InstructionCounter      %02d\n", *instructionCounter);
+    printf("InstructionRegister  %+05d\n", *instructionRegister);
+    printf("OperationCode           %02d\n", *operationCode);
+    printf("Operand                 %02d\n", *operand);
 
+    //Impressao da Memoria no formato de uma tabela 10x10, com formatação de +0000
     printf("\nMEMORIA:\n");
     printf("        0      1      2      3      4      5      6      7      8      9\n");
     for(int i = 0; i < MEMORY_SIZE; i += 10)
@@ -68,6 +105,7 @@ void Dump()
     printf("\n");
 }
 
+//Funcao que verifica se houve overflow do acumulador, ou seja, se o valor esta fora do intervalo delimitado
 bool AccumulatorOverflow(int accumulador)
 {
     if(accumulador < MIN || accumulador > MAX)
@@ -78,132 +116,115 @@ bool AccumulatorOverflow(int accumulador)
     return false;
 }
 
-void ProgramLoading(FILE* arquivo)
+//Carrega o Programa SML de acordo com um arquivo .txt
+void ProgramLoading(FILE* arquivo, int memory[], int* accumulator, int* instructionCounter, int* instructionRegister, int* operationCode, int* operand)
 {
-    while(fscanf(arquivo, "%d", &memory[instructionCounter]) == 1 && instructionCounter < MEMORY_SIZE)
+    //enquanto a leitura nao falhar e enquanto nao sair da memoria
+    while(fscanf(arquivo, "%d", &memory[*instructionCounter]) == 1 && *instructionCounter < MEMORY_SIZE)
     {
-        printf("%02d? %d\n", instructionCounter, memory[instructionCounter]);
-        if(memory[instructionCounter] == SENTINEL)
+        //Impressao do programa presente no arquivo
+        printf("%02d? %d\n", *instructionCounter, memory[*instructionCounter]);
+        //Se o sentinela for encontraod no arquivo, voltamos a memoria naquela posicao para 0, para nao guardar o sentinela na memoria
+        if(memory[*instructionCounter] == SENTINEL)
         {
-            memory[instructionCounter] = 0;
+            memory[*instructionCounter] = 0;
             printf("\nSentinela digitado!\n");
             printf("Carregamento do Programa Completo!\n");
-            Dump();
+            Dump(memory, accumulator, instructionCounter, instructionRegister, operationCode, operand);
             return;
         }
-        if(memory[instructionCounter] < MIN || memory[instructionCounter] > MAX)
+        //verifica se a instrucao esta no mesmo tamanho maximo da palavra
+        if(memory[*instructionCounter] < MIN || memory[*instructionCounter] > MAX)
         {
             printf("Valor fora do intervalo de Instrucoes!\n");
-            Dump();
+            Dump(memory, accumulator, instructionCounter, instructionRegister, operationCode, operand);
             return;
         }
 
-        instructionCounter++;
+        (*instructionCounter)++;
     }
 }
 
-void InstructionExecutionCycle()
+//Execucao do programa carregado
+void InstructionExecutionCycle(int memory[], int* accumulator, int* instructionCounter, int* instructionRegister, int* operationCode, int* operand)
 {
-    instructionCounter = 0;
+    *instructionCounter = 0;
 
-    while (instructionCounter < MEMORY_SIZE)
+    while (*instructionCounter < MEMORY_SIZE)
     {
-        instructionRegister = memory[instructionCounter];
-        operationCode = instructionRegister / 100;
-        operand = instructionRegister % 100;
+        *instructionRegister = memory[*instructionCounter];
+        *operationCode = *instructionRegister / 100;
+        *operand = *instructionRegister % 100;
 
-        switch(operationCode)
+        switch(*operationCode)
         {
             case READ:
-                printf("Digite o numero no endereco %02d: ", operand);
-                scanf("%d", &memory[operand]);
+                printf("Digite um numero no endereco %02d: ", *operand); //le e coloca um inteiro na memoria
+                scanf("%d", &memory[*operand]);
                 break;
             case WRITE:
-                printf("\nO numero em %02d: %d\n", operand, memory[operand]);
+                printf("\nO numero em %02d: %d\n", *operand, memory[*operand]); //apresenta o numero naquela posicao da memoria
                 break;
             case LOAD:
-                accumulator = memory[operand];
+                *accumulator = memory[*operand]; 
                 break;
             case STORE:
-                memory[operand] = accumulator;
+                memory[*operand] = *accumulator;
                 break;
             case ADD:
-                accumulator += memory[operand];
+                *accumulator += memory[*operand];
                 break;
             case SUBTRACT:
-                accumulator -= memory[operand];
+                *accumulator -= memory[*operand];
                 break;
             case DIVIDE:
-                if(memory[operand] == 0)
+                if(memory[*operand] == 0)
                 {
                     printf("Erro Fatal. Divisao por 0!\n");
-                    Dump();
+                    Dump(memory, accumulator, instructionCounter, instructionRegister, operationCode, operand);
                     return;
                 }
-                accumulator /= memory[operand];
+                *accumulator /= memory[*operand];
                 break;
             case MULTIPLY:
-                accumulator *= memory[operand];
+                *accumulator *= memory[*operand];
                 break;
             case BRANCH:
-                instructionCounter = operand;
+                *instructionCounter = *operand;
                 break;
             case BRANCHNEG:
-                if(accumulator < 0)
+                if(*accumulator < 0)
                 {
-                    instructionCounter = operand;
+                    *instructionCounter = *operand;
                 }
                 break;
             case BRANCHZERO:
-                if(accumulator == 0)
+                if(*accumulator == 0)
                 {
-                    instructionCounter = operand;
+                    *instructionCounter = *operand;
                 }
                 break;
             case HALT:
                 printf("Execucao do Simpletron terminou!\n");
-                Dump();
+                Dump(memory, accumulator, instructionCounter, instructionRegister, operationCode, operand);
                 return;
                 break;
             default:
                 printf("Erro: Instrucao Invalida!\n");
-                Dump();
+                Dump(memory, accumulator, instructionCounter, instructionRegister, operationCode, operand);
                 break;
 
         }
 
-        if(AccumulatorOverflow(accumulator))
+        //Verifica se houve algum estouro do acumulador em alguma das operações
+        if(AccumulatorOverflow(*accumulator))
         {
             printf("Erro Fatal. Estouro do Acumulador!\n");
-            Dump();
+            Dump(memory, accumulator, instructionCounter, instructionRegister, operationCode, operand);
             return;
         }
 
-        instructionCounter++;
+        (*instructionCounter)++;
     }
     
-}
-
-int main()
-{
-    setlocale(LC_ALL, "Portuguese");
-    char filename[100];
-    FILE* arquivo;
-    
-    printf("Digite o nome do Arquivo: ");
-    gets(filename);
-
-    arquivo = fopen(filename, "r");
-    if(arquivo == NULL)
-    {
-        printf("Erro ao abrir arquivo!\n");
-        return 1;
-    }
-
-    Initialization();
-    ProgramLoading(arquivo);
-    InstructionExecutionCycle();
-
-    fclose(arquivo);
-    return 0;
 }
