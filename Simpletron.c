@@ -212,7 +212,7 @@ void InstructionExecutionCycle(int memory[], int* accumulator, int* instructionC
             default:
                 printf("Erro: Instrucao Invalida!\n");
                 Dump(memory, accumulator, instructionCounter, instructionRegister, operationCode, operand);
-                break;
+                return;
 
         }
 
